@@ -1,11 +1,10 @@
 import { View, Text } from "react-native";
+import React from "react";
 
 export default function Home(){
   return(
     <View className="flex min-h-screen">
-      <View className="flex flex-row  justify-center">
-        <Text>FimPay</Text>
-      </View>
+      <View className=""></View>
     </View>
   );
 }
