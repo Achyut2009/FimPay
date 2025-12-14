@@ -81,7 +81,7 @@ export default function ProfileScreen() {
     try {
       Alert.alert(
         'Account Deletion Initiated',
-        'Your account deletion has been initiated. Any remaining balance of $2,458.75 will be transferred to your registered bank account within 3-5 business days.',
+        'Your account deletion has been done. Any remaining balance of $2,458.75 will be transferred to your registered bank account within 3-5 business days.',
         [{ text: 'OK', onPress: () => signOut() }]
       );
       closeSettings();
