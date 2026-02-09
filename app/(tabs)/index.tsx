@@ -4,7 +4,7 @@ import React from "react";
 export default function Home(){
   return(
     <View className="flex min-h-screen">
-      <View className="">hello, hi, and welcome toooo FimPay!!!</View>
+      <View className="">hello, hi, and welcome toooo FimPay!!</View>
     </View>
   );
 }
