@@ -8,19 +8,22 @@ import { Text } from '@/components/ui/text';
 import { useSignIn } from '@clerk/clerk-expo';
 import { Link, router } from 'expo-router';
 import * as React from 'react';
-import { type TextInput, View } from 'react-native';
+import { Image, type TextInput, View } from 'react-native';
 
 export function SignInForm() {
   const { signIn, setActive, isLoaded } = useSignIn();
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const passwordInputRef = React.useRef<TextInput>(null);
-  const [error, setError] = React.useState<{ email?: string; password?: string }>({});
+  const [error, setError] = React.useState<{ email?: string; password?: string; general?: string }>({});
 
   async function onSubmit() {
     if (!isLoaded) {
       return;
     }
+
+    // Clear previous errors
+    setError({});
 
     // Start the sign-in process using the email and password provided
     try {
@@ -32,22 +35,63 @@ export function SignInForm() {
       // If sign-in process is complete, set the created session as active
       // and redirect the user
       if (signInAttempt.status === 'complete') {
-        setError({ email: '', password: '' });
         await setActive({ session: signInAttempt.createdSessionId });
         return;
       }
-      // TODO: Handle other statuses
-      console.error(JSON.stringify(signInAttempt, null, 2));
-    } catch (err) {
-      // See https://go.clerk.com/mRUDrIe for more info on error handling
-      if (err instanceof Error) {
-        const isEmailMessage =
-          err.message.toLowerCase().includes('identifier') ||
-          err.message.toLowerCase().includes('email');
-        setError(isEmailMessage ? { email: err.message } : { password: err.message });
+      // Handle other statuses with a user-friendly message
+      console.error('Sign-in status:', signInAttempt.status);
+      setError({ general: 'Sign-in incomplete. Please try again or contact support.' });
+    } catch (err: any) {
+      console.error('Sign-in error:', err);
+
+      // Clerk error handling
+      if (err?.errors && Array.isArray(err.errors) && err.errors.length > 0) {
+        const firstError = err.errors[0];
+        const message = firstError.longMessage || firstError.message || 'An error occurred';
+        
+        // Check if user registered via SSO/social media and is trying to use email/password
+        // Clerk error codes for SSO-only accounts or password not set
+        const ssoRelatedCodes = [
+          'form_password_incorrect',
+          'strategy_for_user_invalid', 
+          'external_account_not_found',
+          'form_password_not_set'
+        ];
+        
+        const isSSOAccount = ssoRelatedCodes.includes(firstError.code) || 
+          message.toLowerCase().includes('password has not been set') ||
+          message.toLowerCase().includes('external account') ||
+          message.toLowerCase().includes('oauth') ||
+          message.toLowerCase().includes('social');
+        
+        if (firstError.code === 'form_identifier_not_found') {
+          setError({ email: message });
+        } else if (firstError.code === 'form_password_incorrect' || firstError.code === 'strategy_for_user_invalid' || firstError.code === 'form_password_not_set') {
+          // Show a helpful message for users who may have registered via social media
+          setError({ 
+            general: 'Sign-in failed. If you registered using Google, Apple, or another social account, please use the sign-in options below instead of email and password.' 
+          });
+        } else if (message.toLowerCase().includes('email') || message.toLowerCase().includes('identifier')) {
+          setError({ email: message });
+        } else if (message.toLowerCase().includes('password')) {
+          // Also check for SSO-related password errors
+          setError({ 
+            general: 'Sign-in failed. If you registered using Google, Apple, or another social account, please use the sign-in options below instead of email and password.' 
+          });
+        } else {
+          setError({ general: message });
+        }
         return;
       }
-      console.error(JSON.stringify(err, null, 2));
+      
+      // Handle standard Error objects
+      if (err?.message) {
+        setError({ general: err.message });
+        return;
+      }
+      
+      // Fallback for unknown error types
+      setError({ general: 'Something went wrong. Please try again.' });
     }
   }
 
@@ -56,9 +100,15 @@ export function SignInForm() {
   }
 
   return (
-    <View className="gap-6">
+    <View className="gap-4">
       <Card className="border-border/0 shadow-none sm:border-border sm:shadow-sm sm:shadow-black/5">
-        <CardHeader>
+        <View className="items-center px-6 mb-2">
+          <Image
+            source={require('@/assets/images/favicon.png')}
+            className="h-32 w-32 rounded"
+          />
+        </View>
+        <CardHeader className="pt-0">
           <CardTitle className="text-center text-xl sm:text-left">Sign in to FimPay</CardTitle>
           <CardDescription className="text-center sm:text-left">
             Welcome back! Please sign in to continue
@@ -107,6 +157,13 @@ export function SignInForm() {
                 <Text className="text-sm font-medium text-destructive">{error.password}</Text>
               ) : null}
             </View>
+
+            {error.general ? (
+              <View className="rounded-md bg-destructive/10 p-3">
+                <Text className="text-sm font-medium text-destructive">{error.general}</Text>
+              </View>
+            ) : null}
+
             <Button className="w-full" onPress={onSubmit}>
               <Text>Continue</Text>
             </Button>

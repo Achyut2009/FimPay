@@ -6,34 +6,32 @@ import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
-import { Image, Platform, View, type ImageSourcePropType } from 'react-native';
+import { Image, Platform, View, Text, type ImageSourcePropType } from 'react-native';
 
 WebBrowser.maybeCompleteAuthSession();
 
 type SocialConnectionStrategy = Extract<
   StartSSOFlowParams['strategy'],
-  'oauth_google' | 'oauth_github' | 'oauth_apple'
+  'oauth_google' | 'oauth_facebook'
 >;
 
 const SOCIAL_CONNECTION_STRATEGIES: {
   type: SocialConnectionStrategy;
   source: ImageSourcePropType;
   useTint?: boolean;
+  name: string;
 }[] = [
-  {
-    type: 'oauth_apple',
-    source: { uri: 'https://img.clerk.com/static/apple.png?width=160' },
-    useTint: true,
-  },
   {
     type: 'oauth_google',
     source: { uri: 'https://img.clerk.com/static/google.png?width=160' },
     useTint: false,
+    name: 'Google',
   },
   {
-    type: 'oauth_github',
-    source: { uri: 'https://img.clerk.com/static/github.png?width=160' },
-    useTint: true,
+    type: 'oauth_facebook',
+    source: { uri: 'https://img.clerk.com/static/facebook.png?width=160' },
+    useTint: false,
+    name: 'Facebook',
   },
 ];
 
@@ -74,24 +72,27 @@ export function SocialConnections() {
 
   return (
     <View className="gap-2 sm:flex-row sm:gap-3">
-      {SOCIAL_CONNECTION_STRATEGIES.map((strategy) => {
-        return (
-          <Button
-            key={strategy.type}
-            variant="outline"
-            size="sm"
-            className="sm:flex-1"
-            onPress={onSocialLoginPress(strategy.type)}>
-            <Image
-              className={cn('size-4', strategy.useTint && Platform.select({ web: 'dark:invert' }))}
-              tintColor={Platform.select({
-                native: strategy.useTint ? (colorScheme === 'dark' ? 'white' : 'black') : undefined,
-              })}
-              source={strategy.source}
-            />
-          </Button>
-        );
-      })}
+        {SOCIAL_CONNECTION_STRATEGIES.map(
+          (conn: { type: SocialConnectionStrategy; source: ImageSourcePropType; useTint?: boolean; name: string }) => {
+            return (
+              <Button
+                key={conn.type}
+                variant="outline"
+                size="sm"
+                className="sm:flex-1 flex-row gap-3.5 justify-center"
+                onPress={onSocialLoginPress(conn.type)}>
+                <Image
+                  className={cn('size-4', conn.useTint && Platform.select({ web: 'dark:invert' }))}
+                  tintColor={Platform.select({
+                    native: conn.useTint ? (colorScheme === 'dark' ? 'white' : 'black') : undefined,
+                  })}
+                  source={conn.source}
+                />
+                <Text className={cn('text-sm', colorScheme === 'dark' ? 'text-white' : 'text-muted-foreground')}>Continue with {conn.name}</Text>
+              </Button>
+            );
+          },
+        )}
     </View>
   );
 }

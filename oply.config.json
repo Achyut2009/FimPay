@@ -1,0 +1,42 @@
+{
+  "version": "1.0",
+  "project": {
+    "id": null,
+    "name": "FimPay",
+    "repository": "",
+    "provider": "GITHUB",
+    "branch": "main"
+  },
+  "stack": {
+    "language": "TypeScript",
+    "framework": "React",
+    "packageManager": "npm",
+    "hasDocker": false,
+    "hasK8s": false,
+    "hasTests": false,
+    "buildCommand": "",
+    "testCommand": "",
+    "lintCommand": "",
+    "startCommand": "npm run dev"
+  },
+  "pipeline": {
+    "stages": [
+      {
+        "id": "install",
+        "type": "BUILD",
+        "name": "Install Dependencies",
+        "command": "npm install",
+        "dependsOn": []
+      }
+    ]
+  },
+  "environments": [
+    "Development",
+    "Staging",
+    "Production"
+  ],
+  "ai": {
+    "autoFix": true,
+    "riskThreshold": 60
+  }
+}
